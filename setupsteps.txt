@@ -1,0 +1,12 @@
+Heroku
+arabicspeechrecognition@gmail.com
+Aleenababer046@
+
+heroku login
+git add .
+git commit -am "make it better"
+git push heroku master
+heroku buildpacks:set heroku/python
+heroku buildpacks:add --index 1 heroku-community/apt
+heroku buildpacks
+# Should show apt first, then python
