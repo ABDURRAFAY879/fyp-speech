@@ -18,6 +18,7 @@ from speechtotext import get_large_audio_transcription
 
 # pydub.AudioSegment.converter = "ffmpeg -loglevel debug"
 
+
 def speechmodels(sample):
     warnings.filterwarnings("ignore")
     # for Machine Learning with random Forest
@@ -26,11 +27,11 @@ def speechmodels(sample):
     features = process_data_for_ML_Rf(sample)
     # prediction
     pred_ML_RF = predict_ML_RF(features)
-    # pred_ML_KNN = predict_ML_KNN(features)
-    # pred_ML_SVM = predict_ML_SVM(features)
-    # pred_ML_Vote= predict_ML_VOTE(features)
-    # Votes=pred_ML_RF,pred_ML_KNN,pred_ML_SVM,pred_ML_Vote
-    return pred_ML_RF
+    pred_ML_KNN = predict_ML_KNN(features)
+    pred_ML_SVM = predict_ML_SVM(features)
+    pred_ML_Vote = predict_ML_VOTE(features)
+    Votes = pred_ML_RF, pred_ML_KNN, pred_ML_SVM, pred_ML_Vote
+    return Votes
 
 
 def wordsmodels(sample):
@@ -289,7 +290,7 @@ def makechunk(Inputfilename, sample_rate, foldername):
     sound_file = None
     # sound_file = AudioSegment.from_wav(Inputfilename)
     sound_file = AudioSegment.from_file(Inputfilename)
-    
+
     audio_chunks = split_on_silence(sound_file, min_silence_len=40, silence_thresh=-36)
     # os.mkdir('content')
     os.mkdir(foldername)
@@ -298,7 +299,7 @@ def makechunk(Inputfilename, sample_rate, foldername):
         # print("exporting", out_file)
         chunk.export(out_file)
     sound_files = []
-    chunks = os.listdir(foldername)
+    chunks = sorted(os.listdir(foldername))
 
     for chunk in chunks:
         chunk = foldername + "/" + chunk
@@ -333,6 +334,7 @@ def speechrecognitiontest(Inputfilename):
     # Inputfilename = "POC/108/001/108001_01.wav"
     sample_rate = 16000
     sample, sample_rate = librosa.load(Inputfilename, sr=sample_rate)
+    return speechmodels(sample)
     pred_ML_SVM = speechmodels(sample)
     # print(pred_ML_RF,pred_ML_KNN,pred_ML_SVM,pred_ML_Vote)
 
@@ -433,7 +435,7 @@ def Main(Inputfilename):
     folder = "chunks"
 
     try:
-        for dir in os.listdir(folder):
+        for dir in sorted(os.listdir(folder)):
             shutil.rmtree(os.path.join(folder, dir))
     except OSError as e:
         print("Error: %s : %s" % (folder, e.strerror))
@@ -441,13 +443,12 @@ def Main(Inputfilename):
     sample_rate = 16000
     Predictedfoldername = "chunks/PredictedTest"
     # os.chmod(Predictedfoldername, 0o777)
-    pred_ML_RF = speechrecognitiontest(Inputfilename)
+    pred_ML_RF, *others = speechrecognitiontest(Inputfilename)
     labels = sorted(os.listdir("ayat"))
     print("pred_ML_RF", pred_ML_RF)
     print("labels", labels)
     Surah_Result = labels[np.int(pred_ML_RF)]
-    
-    return Surah_Result, 1 , 2, 3, 4
+
     chunks_timestamps = makechunk(Inputfilename, sample_rate, Predictedfoldername)
     Targetfoldername = "chunks/TargetTest"
     TargetInputfileFolder = "ayat"
@@ -483,40 +484,42 @@ def Main(Inputfilename):
                 test_chunks[i]
             )
             Result = [
-                word_labels[np.int(pred_ML_RF)],
-                word_labels[np.int(pred_ML_KNN)],
-                word_labels[np.int(pred_ML_SVM)],
-                word_labels[np.int(pred_ML_Vote)],
+                # word_labels[np.int(pred_ML_RF)],
+                # word_labels[np.int(pred_ML_KNN)],
+                # word_labels[np.int(pred_ML_SVM)],
+                # word_labels[np.int(pred_ML_Vote)],
             ]
             counter = Counter(Result)
             most_occur = counter.most_common(1)
             print(most_occur)
             wordsresult.append(most_occur)
-            d1 = dtw_calculation(test_chunks[i], target_chunks[i], 16000)
+            # d1 = dtw_calculation(test_chunks[i], target_chunks[i], 16000)
             # chunk_comparison(test_chunks[i], target_chunks[i])
-            distance.append(d1)
+            # distance.append(d1)
     elif len(test_chunks) > len(target_chunks):
         status = "You read with fast speed read it slow."
         print(status)
         for i in range(len(target_chunks)):
             if target_chunks[i]:
-                # pred_ML_RF, pred_ML_KNN, pred_ML_SVM, pred_ML_Vote = speechrecognitiontest(test_chunks[i])
-                pred_ML_SVM = speechrecognitiontest(test_chunks[i])
+                pred_ML_RF, pred_ML_KNN, pred_ML_SVM, pred_ML_Vote = (
+                    speechrecognitiontest(test_chunks[i])
+                )
+                # pred_ML_SVM = speechrecognitiontest(test_chunks[i])
                 print(f"pred_ML_SVM = {pred_ML_SVM}")
-                
+
                 Result = [
                     # word_labels[np.int(pred_ML_RF)],
                     # word_labels[np.int(pred_ML_KNN)],
-                    word_labels[np.int(pred_ML_SVM)],
+                    # word_labels[np.int(pred_ML_SVM)],
                     # word_labels[np.int(pred_ML_Vote)],
                 ]
                 counter = Counter(Result)
                 most_occur = counter.most_common(1)
                 print(most_occur)
                 wordsresult.append(most_occur)
-                d1 = dtw_calculation(test_chunks[i], target_chunks[i], 16000)
+                # d1 = dtw_calculation(test_chunks[i], target_chunks[i], 16000)
                 # chunk_comparison(test_chunks[i], target_chunks[i])
-                distance.append(d1)
+                # distance.append(d1)
     elif len(test_chunks) < len(target_chunks):
         status = "You read with slow speed read it normal."
         print(status)
@@ -526,19 +529,19 @@ def Main(Inputfilename):
                     speechrecognitiontest(test_chunks[i])
                 )
                 Result = [
-                    word_labels[np.int(pred_ML_RF)],
-                    word_labels[np.int(pred_ML_KNN)],
-                    word_labels[np.int(pred_ML_SVM)],
-                    word_labels[np.int(pred_ML_Vote)],
+                    # word_labels[np.int(pred_ML_RF)],
+                    # word_labels[np.int(pred_ML_KNN)],
+                    # word_labels[np.int(pred_ML_SVM)],
+                    # word_labels[np.int(pred_ML_Vote)],
                 ]
                 counter = Counter(Result)
                 most_occur = counter.most_common(1)
-                print(most_occur[1, 1])
+                print(most_occur)
                 wordsresult.append(most_occur)
                 print(Result)
-                d1 = dtw_calculation(test_chunks[i], target_chunks[i], 16000)
+                # d1 = dtw_calculation(test_chunks[i], target_chunks[i], 16000)
                 # chunk_comparison(test_chunks[i], target_chunks[i])
-                distance.append(d1)
+                # distance.append(d1)
     # most_occur = get_large_audio_transcription(Inputfilename)
     # words = most_occur.split()
     print("#" * 50)

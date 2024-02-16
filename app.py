@@ -40,8 +40,6 @@ async def create_upload_file(file: UploadFile = File(...)):
         test_file_path
     )
     
-    return {"Surah_Result": Surah_Result}
-
     # SurahVerse.append(Surah_Result)
     # word.append(wordsresult)
     # distance.append(distance1)

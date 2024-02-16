@@ -1,6 +1,4 @@
-
-
-#Importing Libraries
+# Importing Libraries
 from collections import Counter
 
 import numpy as np
@@ -38,34 +36,38 @@ from sklearn.metrics import classification_report
 from dev_config import root, word_dataset_dir
 from dev_config import model_path
 
+
 def mfcc_feature(audio, sample_rate):
     mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=40)
- 
-    return mfcc   # it returns a np.array with size (40,'n') where n is the number of audio frames.
+
+    return mfcc  # it returns a np.array with size (40,'n') where n is the number of audio frames.
+
 
 def melspectrogram_feature(audio, sample_rate):
     melspectrogram = librosa.feature.melspectrogram(y=audio, sr=sample_rate, n_fft=2048)
- 
-    return melspectrogram   # it returns a np.array with size (128,'n') where n is the number of audio frames.
+
+    return melspectrogram  # it returns a np.array with size (128,'n') where n is the number of audio frames.
+
 
 def poly_feature(audio, sample_rate):
     poly_features = librosa.feature.poly_features(y=audio, sr=sample_rate, n_fft=2048)
- 
-    return poly_features   # it returns a np.array with size (2,'n') where n is the number of audio frames.
+
+    return poly_features  # it returns a np.array with size (2,'n') where n is the number of audio frames.
+
 
 def zero_crossing_rate_features(audio):
     zero_crossing_rate = librosa.feature.zero_crossing_rate(y=audio)
- 
-    return zero_crossing_rate   # it returns a np.array with size (1,'n') where n is the number of audio frames.
+
+    return zero_crossing_rate  # it returns a np.array with size (1,'n') where n is the number of audio frames.
 
 
 def normalize(data):
-  data = (data-min(data))/(max(data)-min(data))
-  
-  return data
+    data = (data - min(data)) / (max(data) - min(data))
+
+    return data
 
 
-def results(target_test, predicted_test,ModelName,labels):
+def results(target_test, predicted_test, ModelName, labels):
     target_names = labels
     # print(classification_report(target_test, y_predd1, target_names=target_names))
     y_test = target_test
@@ -86,113 +88,121 @@ def results(target_test, predicted_test,ModelName,labels):
     skplt.metrics.plot_confusion_matrix(
         y_test,
         preds,
-        figsize=(10, 6), title="Confusion matrix\n Deposite Category "+ModelName)
+        figsize=(10, 6),
+        title="Confusion matrix\n Deposite Category " + ModelName,
+    )
     plt.xlim(-0.5, len(np.unique(y_test)) - 0.5)
     plt.ylim(len(np.unique(y_test)) - 0.5, -0.5)
-    plt.savefig('cvroc.png')
+    plt.savefig("cvroc.png")
     plt.show()
-warnings.filterwarnings('ignore')
+
+
+warnings.filterwarnings("ignore")
 
 # setting the path where all file's folder are
 
 root = word_dataset_dir
 
-Features_data = pd.DataFrame(columns=['features','class']) 
+Features_data = pd.DataFrame(columns=["features", "class"])
 
 i = 0
-sample_rate = 16000 
+sample_rate = 16000
 no_of_samples = 300
-MainFolder="worddataset"
-labels=os.listdir(MainFolder)
+MainFolder = "worddataset"
+labels = sorted(os.listdir(MainFolder))
 
 
 # Loading the features in the dataframe
 for label in labels:
-  
-  print(label)
-  folders = os.path.join(root,label)
-  items = os.listdir(folders)
 
-  for item in items[:no_of_samples]:
+    print(label)
+    folders = os.path.join(root, label)
+    items = sorted(os.listdir(folders))
 
-    path = os.path.join(folders,item)
+    for item in items[:no_of_samples]:
 
-    #Convert .wave into array
-    samples, sample_rate=librosa.load(path ,sr=sample_rate)
+        path = os.path.join(folders, item)
 
-    #Extract Feautures
-    MFCC = mfcc_feature(samples , sample_rate)
-    MSS = melspectrogram_feature(samples , sample_rate)
-    poly = poly_feature(samples , sample_rate)
-    ZCR = zero_crossing_rate_features(samples)
+        # Convert .wave into array
+        samples, sample_rate = librosa.load(path, sr=sample_rate)
 
-    # flatten an array
-    MFCC = MFCC.flatten()
-    MSS = MSS.flatten()
-    poly = poly.flatten()
-    ZCR = ZCR.flatten()
+        # Extract Feautures
+        MFCC = mfcc_feature(samples, sample_rate)
+        MSS = melspectrogram_feature(samples, sample_rate)
+        poly = poly_feature(samples, sample_rate)
+        ZCR = zero_crossing_rate_features(samples)
 
-    # normalizing
-    # MFCC = normalize(MFCC)
+        # flatten an array
+        MFCC = MFCC.flatten()
+        MSS = MSS.flatten()
+        poly = poly.flatten()
+        ZCR = ZCR.flatten()
 
-    features = np.concatenate(( MFCC ,MSS, poly, ZCR))
+        # normalizing
+        # MFCC = normalize(MFCC)
 
-    # padding and trimming
-    max_len = 6000
+        features = np.concatenate((MFCC, MSS, poly, ZCR))
 
-    pad_width = max_len - features.shape[0]
-    if pad_width > 0:
-      features = np.pad(features, pad_width=((0, pad_width)), mode='constant')
+        # padding and trimming
+        max_len = 6000
 
-    features = features[:max_len]
+        pad_width = max_len - features.shape[0]
+        if pad_width > 0:
+            features = np.pad(features, pad_width=((0, pad_width)), mode="constant")
 
-    Features_data.loc[i] =[features, label]
-    i += 1
+        features = features[:max_len]
+
+        Features_data.loc[i] = [features, label]
+        i += 1
 np.set_printoptions(threshold=sys.maxsize)
-feature=np.array(Features_data['features'].tolist())
-target = Features_data.iloc[:,-1]
+feature = np.array(Features_data["features"].tolist())
+target = Features_data.iloc[:, -1]
 # converting labels into numeric
 le = preprocessing.LabelEncoder()
-target=le.fit_transform(target)
+target = le.fit_transform(target)
 # features = preprocessing.MinMaxScaler().fit_transform(features)
-feature_train, feature_test, target_train, target_test = train_test_split(feature,target)
-#Create a Gaussian Classifier
-clff=RandomForestClassifier(n_estimators=800)
-#Train the model using the training sets y_pred=clf.predict(X_test)
-clff = clff.fit(feature_train,target_train)
-y_predd1=clff.predict(feature_test)
+feature_train, feature_test, target_train, target_test = train_test_split(
+    feature, target
+)
+# Create a Gaussian Classifier
+clff = RandomForestClassifier(n_estimators=800)
+# Train the model using the training sets y_pred=clf.predict(X_test)
+clff = clff.fit(feature_train, target_train)
+y_predd1 = clff.predict(feature_test)
 # Model Accuracy, how often is the classifier correct?
-print("Random Forest Accuracy:",metrics.accuracy_score(target_test, y_predd1))
-results(target_test, y_predd1,"Random Forest",labels)
+print("Random Forest Accuracy:", metrics.accuracy_score(target_test, y_predd1))
+results(target_test, y_predd1, "Random Forest", labels)
 
 target_names = labels
 
-sns.heatmap(confusion_matrix(target_test,y_predd1), annot=True, cmap='Blues')
-joblib.dump(clff, model_path+"model_3000words.sav")
-#Create a KNN Classifier
-knn=KNeighborsClassifier()
-#Train the model using the training sets y_pred=clf.predict(X_test)
-knn = knn.fit(feature_train,target_train)
-y_predd2=knn.predict(feature_test)
+sns.heatmap(confusion_matrix(target_test, y_predd1), annot=True, cmap="Blues")
+joblib.dump(clff, model_path + "model_3000words.sav")
+# Create a KNN Classifier
+knn = KNeighborsClassifier()
+# Train the model using the training sets y_pred=clf.predict(X_test)
+knn = knn.fit(feature_train, target_train)
+y_predd2 = knn.predict(feature_test)
 # Model Accuracy, how often is the classifier correct?
-print("Accuracy KNN:",metrics.accuracy_score(target_test, y_predd2))
-results(target_test, y_predd2,"KNN",labels)
-joblib.dump(knn, model_path+"model_knnwords.sav")
+print("Accuracy KNN:", metrics.accuracy_score(target_test, y_predd2))
+results(target_test, y_predd2, "KNN", labels)
+joblib.dump(knn, model_path + "model_knnwords.sav")
 # training a linear SVM classifier
-svm_model_linear = SVC(kernel = 'linear', C = 1).fit(feature_train,target_train)
+svm_model_linear = SVC(kernel="linear", C=1).fit(feature_train, target_train)
 y_predd3 = svm_model_linear.predict(feature_test)
 # model accuracy for X_test
 accuracy = svm_model_linear.score(feature_test, target_test)
-print("Accuracy SVM:",metrics.accuracy_score(target_test, y_predd3))
-results(target_test, y_predd3,"SVM",labels)
-joblib.dump(svm_model_linear, model_path+"model_svmwords.sav")
+print("Accuracy SVM:", metrics.accuracy_score(target_test, y_predd3))
+results(target_test, y_predd3, "SVM", labels)
+joblib.dump(svm_model_linear, model_path + "model_svmwords.sav")
 model1 = RandomForestClassifier()
 model2 = KNeighborsClassifier()
 model3 = LogisticRegression()
-Voting = VotingClassifier(estimators=[('RF', model1 ), ('knn', model2),('lr',model3)], voting='hard')
-Voting.fit(feature_train,target_train)
+Voting = VotingClassifier(
+    estimators=[("RF", model1), ("knn", model2), ("lr", model3)], voting="hard"
+)
+Voting.fit(feature_train, target_train)
 vpredictions = Voting.predict(feature_test)
 vscore = Voting.score(feature_test, target_test)
 print("Voting Score", vscore)
-results(target_test, vpredictions,"Voting Classifier",labels)
-joblib.dump(Voting, model_path+"model_votingwords.sav")
+results(target_test, vpredictions, "Voting Classifier", labels)
+joblib.dump(Voting, model_path + "model_votingwords.sav")
