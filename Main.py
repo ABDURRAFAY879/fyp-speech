@@ -288,6 +288,7 @@ def makechunk(Inputfilename, sample_rate, foldername):
     # os.remove(foldername)
     print("SOUND FILE", Inputfilename)
     sound_file = None
+    
     # sound_file = AudioSegment.from_wav(Inputfilename)
     sound_file = AudioSegment.from_file(Inputfilename)
 
@@ -297,7 +298,7 @@ def makechunk(Inputfilename, sample_rate, foldername):
     for i, chunk in enumerate(audio_chunks):
         out_file = foldername + "/chunk{0}.wav".format(i)
         # print("exporting", out_file)
-        chunk.export(out_file)
+        chunk.export(out_file, format="wav")
     sound_files = []
     chunks = sorted(os.listdir(foldername))
 
@@ -451,7 +452,7 @@ def Main(Inputfilename):
 
     chunks_timestamps = makechunk(Inputfilename, sample_rate, Predictedfoldername)
     Targetfoldername = "chunks/TargetTest"
-    TargetInputfileFolder = "ayat"
+    TargetInputfileFolder = "/app/ayat"
     SubFolder = TargetInputfileFolder + "/" + Surah_Result + "/"
     print("SubFolder", SubFolder)
     train_Labels = []
@@ -475,6 +476,8 @@ def Main(Inputfilename):
     word_labels = os.listdir("worddataset/")
     wordsresult = []
     print("chunks length", len(test_chunks), len(target_chunks))
+    
+    return Surah_Result, 1, 1, 1, 1
     if len(test_chunks) == len(target_chunks):
         status = "You read with good normal speed."
         print(status)

@@ -116,7 +116,7 @@ for label in labels:
     print(label)
     folders = os.path.join(root, label)
     items = sorted(os.listdir(folders))
-
+    print('items', items)
     for item in items[:no_of_samples]:
 
         path = os.path.join(folders, item)

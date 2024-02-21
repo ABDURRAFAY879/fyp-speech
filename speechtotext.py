@@ -14,6 +14,7 @@ def get_large_audio_transcription(path):
     # initialize the recognizer
     r = sr.Recognizer()
     # open the file
+    print('get_large_audio_transcription', filename)
     with sr.AudioFile(filename) as source:
         # listen for the data (load audio to memory)
         audio_data = r.record(source)
